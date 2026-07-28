@@ -56,7 +56,7 @@ The bot automatically applies numbered SQL migrations from `migrations/` when it
    - Send Messages
    - Attach Files
    - Read Message History
-6. Put the bot role above every moderator or administrator role whose roles it may need to remove.
+6. Put the bot role above moderator or administrator roles whenever possible. Protection can still be activated when higher roles exist, but Discord will prevent the bot from removing roles at or above its own highest role.
 
 The bot intentionally does not need Kick Members or Ban Members. It observes those actions through the audit log but never performs them.
 
@@ -228,3 +228,7 @@ Run `/antidefacement test` after configuring the owner/admin list. The command n
 - `dm_failed: ...` indicates a Discord API failure; inspect the Railway deployment logs for the full recipient ID and error.
 
 Alarm notifications send the urgent text first and recovery attachments in a second message. An attachment failure can no longer suppress the primary alarm notification. Configure `/antidefacement setalertchannel` as a server-side fallback because Discord users can disable DMs.
+
+## Higher-role behavior
+
+The bot no longer blocks activation or sends health warnings merely because some dangerous roles are above its role. Discord role hierarchy still applies: the bot can remove only roles below its highest role. A user whose higher role retains destructive permissions may therefore not be fully contained.

@@ -461,21 +461,4 @@ class ProtectionCog(commands.Cog):
                 dangerous.append(label)
         if dangerous:
             problems.append("@everyone has dangerous permissions: " + ", ".join(dangerous))
-        dangerous_above = [
-            role.name
-            for role in guild.roles
-            if role >= bot_member.top_role
-            and role != bot_member.top_role
-            and (
-                role.permissions.administrator
-                or role.permissions.manage_roles
-                or role.permissions.manage_channels
-                or role.permissions.ban_members
-                or role.permissions.kick_members
-            )
-        ]
-        if dangerous_above:
-            problems.append(
-                "Dangerous roles above the bot cannot be removed: " + ", ".join(dangerous_above[:20])
-            )
         return problems

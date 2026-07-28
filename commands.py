@@ -658,7 +658,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             )
         )
 
-    @app_commands.command(name="checkpermissions", description="Check role hierarchy and bot permissions.")
+    @app_commands.command(name="checkpermissions", description="Check critical bot permissions.")
     async def checkpermissions(self, interaction: discord.Interaction) -> None:
         if not await self._authorized(interaction):
             return

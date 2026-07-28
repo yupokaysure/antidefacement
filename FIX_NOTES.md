@@ -8,3 +8,10 @@
 
 - Removed JSON attachments from alarm and backup Discord messages; structured data remains stored in PostgreSQL.
 - Standardized all user-facing branding to “Anti Defacement” without a dash.
+
+## Higher-role activation change
+
+- Removed the activation blocker for dangerous roles above the bot.
+- Removed recurring health warnings caused only by higher roles.
+- Kept critical checks for View Audit Log, Manage Roles, and dangerous @everyone permissions.
+- Updated `/antidefacement checkpermissions` wording.
