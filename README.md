@@ -219,4 +219,14 @@ migrations/002_add_backup_retention.sql
 ```
 
 The bot will apply it once at the next startup and record it in `schema_migrations`.
-"# antidefacement" 
+
+## Notification troubleshooting
+
+Run `/antidefacement test` after configuring the owner/admin list. The command now reports a delivery result for every DM recipient and the alert channel.
+
+- `message_sent; no_attachments` means the test DM arrived.
+- `dm_forbidden_or_closed` means the user must allow direct messages from server members or unblock the bot.
+- `user_not_found` means the configured Discord user ID is not available to the bot.
+- `dm_failed: ...` indicates a Discord API failure; inspect the Railway deployment logs for the full recipient ID and error.
+
+Alarm notifications send the urgent text first and recovery attachments in a second message. An attachment failure can no longer suppress the primary alarm notification. Configure `/antidefacement setalertchannel` as a server-side fallback because Discord users can disable DMs.

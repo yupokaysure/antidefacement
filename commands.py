@@ -724,6 +724,18 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
         if not alarm or int(alarm.get("guild_id", 0)) != guild.id:
             await interaction.response.send_message("Alarm not found.", ephemeral=True)
             return
+
+        notification_results = alarm.get("notification_results") or {}
+        dm_results = notification_results.get("dms") or {}
+        dm_lines = [f"• <@{user_id}> (`{user_id}`): `{result}`" for user_id, result in dm_results.items()]
+        notification_text = (
+            "\n**Notification delivery**\n"
+            + ("\n".join(dm_lines) if dm_lines else "• No DM results were recorded.")
+            + f"\n• Alert channel: `{notification_results.get('alert_channel', 'not recorded')}`"
+        )
+        if notification_results.get("error"):
+            notification_text += f"\n• Error: `{notification_results['error']}`"
+
         await interaction.response.send_message(
             f"**{alarm['alarm_id']}**\n"
             f"Offender: <@{alarm['offender_id']}> (`{alarm['offender_id']}`)\n"
@@ -732,7 +744,8 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             f"Events: **{len(alarm.get('evidence', []))}**\n"
             f"Roles removed: **{len(alarm.get('removed_roles', []))}**\n"
             f"Unremovable roles: **{len(alarm.get('unremovable_roles', []))}**\n"
-            f"Containment errors: **{len(alarm.get('removal_errors', []))}**",
+            f"Containment errors: **{len(alarm.get('removal_errors', []))}**"
+            + notification_text,
             ephemeral=True,
         )
 
@@ -760,19 +773,32 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
         )
         await interaction.response.send_message(f"Alarm **{alarm_id}** acknowledged.", ephemeral=True)
 
-    @app_commands.command(name="test", description="Send a test alert without removing roles.")
+    @app_commands.command(name="test", description="Test alerts and show delivery results.")
     async def test(self, interaction: discord.Interaction) -> None:
         if not await self._authorized(interaction):
             return
         guild = interaction.guild
         assert guild is not None
-        await interaction.response.send_message("Sending the test alert.", ephemeral=True)
-        await self.notifier.broadcast(
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        dm_results, channel_result = await self.notifier.broadcast(
             guild,
             content=(
                 f"**TEST ALERT:** Anti-Defacement notifications are working in **{guild.name}**. "
                 f"Triggered by <@{interaction.user.id}>. No roles were changed."
             ),
+        )
+        lines = [
+            f"• <@{user_id}> (`{user_id}`): `{result}`"
+            for user_id, result in sorted(dm_results.items())
+        ]
+        await interaction.edit_original_response(
+            content=(
+                "**Notification test results**\n"
+                + ("\n".join(lines) if lines else "• No DM recipients were resolved.")
+                + f"\n• Alert channel: `{channel_result}`"
+                + "\n\n`dm_forbidden_or_closed` means that recipient must allow DMs "
+                  "from server members or unblock the bot."
+            )
         )
 
     @app_commands.command(name="checkpermissions", description="Check role hierarchy and bot permissions.")

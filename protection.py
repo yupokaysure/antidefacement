@@ -280,18 +280,44 @@ class ProtectionCog(commands.Cog):
         await self.store.update_alarm(alarm_id, **alarm)
 
         log_paths: list[str] = []
+        notification_error: str | None = None
         try:
-            log_paths = await self._write_alarm_logs(alarm)
+            try:
+                log_paths = await self._write_alarm_logs(alarm)
+            except Exception as exc:
+                # Recovery-log generation must never suppress the urgent alert.
+                notification_error = f"Recovery log generation failed: {type(exc).__name__}: {exc}"
+                log.exception("Could not generate recovery logs for alarm %s", alarm_id)
+
             content = self._alarm_message(alarm)
-            dm_results, channel_result = await self.notifier.broadcast(
-                guild,
-                content=content,
-                attachment_paths=log_paths,
-            )
+            try:
+                dm_results, channel_result = await self.notifier.broadcast(
+                    guild,
+                    content=content,
+                    attachment_paths=log_paths,
+                )
+            except Exception as exc:
+                # Preserve the alarm and expose an explicit failure instead of
+                # letting an event-listener exception disappear into the logs.
+                notification_error = (
+                    f"Notification broadcast failed: {type(exc).__name__}: {exc}"
+                )
+                log.exception("Notification broadcast failed for alarm %s", alarm_id)
+                dm_results = {}
+                channel_result = "broadcast_exception"
+
             alarm["notification_results"] = {
                 "dms": {str(key): value for key, value in dm_results.items()},
                 "alert_channel": channel_result,
+                "error": notification_error,
             }
+            log.info(
+                "Alarm %s notification results: dms=%s alert_channel=%s error=%s",
+                alarm_id,
+                alarm["notification_results"]["dms"],
+                channel_result,
+                notification_error,
+            )
             await self.store.update_alarm(
                 alarm_id,
                 notification_results=alarm["notification_results"],
