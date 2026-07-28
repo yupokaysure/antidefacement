@@ -89,7 +89,17 @@ class RestoreService:
             result["errors"].append(f"Fatal restore error: {exc}")
         finally:
             result["completed_at"] = utc_iso()
-            await self.store.update_restore_job(restore_id, **result)
+            try:
+                await self.store.update_restore_job(
+                    restore_id,
+                    **{key: value for key, value in result.items() if key != "restore_id"},
+                )
+            except Exception as exc:
+                # The Discord-side restore may already have completed. Record the
+                # persistence problem in the returned result instead of raising a
+                # misleading command failure after the work went through.
+                log.exception("Could not persist final state for restore %s", restore_id)
+                result["database_persistence_error"] = f"{type(exc).__name__}: {exc}"
 
         return result
 

@@ -326,7 +326,10 @@ class PostgresStore:
         value = await pool.fetchval("SELECT data FROM alarms WHERE alarm_id = $1", alarm_id)
         return dict(value) if isinstance(value, dict) else None
 
-    async def update_alarm(self, alarm_id: str, **changes: Any) -> dict[str, Any] | None:
+    async def update_alarm(self, alarm_id: str, /, **changes: Any) -> dict[str, Any] | None:
+        supplied_id = changes.pop("alarm_id", None)
+        if supplied_id is not None and str(supplied_id) != str(alarm_id):
+            raise ValueError("Alarm ID in changes does not match the requested alarm.")
         pool = self.require_pool()
         async with pool.acquire() as connection:
             async with connection.transaction():
@@ -413,7 +416,10 @@ class PostgresStore:
         except asyncpg.UniqueViolationError as exc:
             raise ValueError(f"Backup ID already exists: {item['backup_id']}") from exc
 
-    async def update_backup(self, backup_id: str, **changes: Any) -> dict[str, Any] | None:
+    async def update_backup(self, backup_id: str, /, **changes: Any) -> dict[str, Any] | None:
+        supplied_id = changes.pop("backup_id", None)
+        if supplied_id is not None and str(supplied_id) != str(backup_id):
+            raise ValueError("Backup ID in changes does not match the requested backup.")
         pool = self.require_pool()
         async with pool.acquire() as connection:
             async with connection.transaction():
@@ -509,7 +515,10 @@ class PostgresStore:
             item,
         )
 
-    async def update_restore_job(self, restore_id: str, **changes: Any) -> None:
+    async def update_restore_job(self, restore_id: str, /, **changes: Any) -> None:
+        supplied_id = changes.pop("restore_id", None)
+        if supplied_id is not None and str(supplied_id) != str(restore_id):
+            raise ValueError("Restore ID in changes does not match the requested restore.")
         pool = self.require_pool()
         async with pool.acquire() as connection:
             async with connection.transaction():

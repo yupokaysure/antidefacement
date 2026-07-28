@@ -277,7 +277,21 @@ class ProtectionCog(commands.Cog):
                             )
 
         alarm["status"] = "contained" if alarm["removed_roles"] or not role_snapshot else "containment_failed"
-        await self.store.update_alarm(alarm_id, **alarm)
+        # ``alarm`` contains its own alarm_id. Passing the full mapping together
+        # with the positional alarm_id used to raise ``got multiple values for
+        # argument 'alarm_id'`` after containment. That stopped the event handler
+        # before notifications were sent. Persist a key-safe copy and, even if
+        # PostgreSQL is temporarily unavailable, continue to send the urgent alert.
+        try:
+            await self.store.update_alarm(
+                alarm_id,
+                **{key: value for key, value in alarm.items() if key != "alarm_id"},
+            )
+        except Exception as exc:
+            alarm["persistence_error"] = (
+                f"Initial post-containment alarm update failed: {type(exc).__name__}: {exc}"
+            )
+            log.exception("Could not persist post-containment state for alarm %s", alarm_id)
 
         log_paths: list[str] = []
         notification_error: str | None = None
@@ -318,10 +332,17 @@ class ProtectionCog(commands.Cog):
                 channel_result,
                 notification_error,
             )
-            await self.store.update_alarm(
-                alarm_id,
-                notification_results=alarm["notification_results"],
-            )
+            try:
+                await self.store.update_alarm(
+                    alarm_id,
+                    notification_results=alarm["notification_results"],
+                    persistence_error=alarm.get("persistence_error"),
+                )
+            except Exception:
+                # Notification delivery has already been attempted. A database
+                # write failure here must not turn a successful containment into
+                # an unhandled listener exception.
+                log.exception("Could not persist notification results for alarm %s", alarm_id)
         finally:
             for value in log_paths:
                 try:

@@ -944,4 +944,11 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             text += "\n\n**Errors**\n" + "\n".join(f"• {item}" for item in errors[:20])
             if len(errors) > 20:
                 text += f"\n• …and {len(errors) - 20} more"
+        persistence_error = result.get("database_persistence_error")
+        if persistence_error:
+            text += (
+                "\n\n**Database warning**\n"
+                "The Discord restoration completed, but saving the final restore-job record failed: "
+                f"`{persistence_error}`"
+            )
         return text
