@@ -72,7 +72,7 @@ class AntiDefacementBot(commands.Bot):
         try:
             owner = self.get_user(GLOBAL_BOT_OWNER_ID) or await self.fetch_user(GLOBAL_BOT_OWNER_ID)
             await owner.send(
-                f"Anti-Defacement Bot joined **{guild.name}** (`{guild.id}`). "
+                f"Anti Defacement Bot joined **{guild.name}** (`{guild.id}`). "
                 "Protection starts inactive until an authorized user runs `/antidefacement activate`."
             )
         except (discord.Forbidden, discord.NotFound, discord.HTTPException):
@@ -82,7 +82,7 @@ class AntiDefacementBot(commands.Bot):
         try:
             owner = self.get_user(GLOBAL_BOT_OWNER_ID) or await self.fetch_user(GLOBAL_BOT_OWNER_ID)
             await owner.send(
-                f"Anti-Defacement Bot was removed from or lost access to **{guild.name}** (`{guild.id}`)."
+                f"Anti Defacement Bot was removed from or lost access to **{guild.name}** (`{guild.id}`)."
             )
         except (discord.Forbidden, discord.NotFound, discord.HTTPException):
             pass

@@ -1,4 +1,4 @@
-# Anti-Defacement Discord Bot
+# Anti Defacement Discord Bot
 
 A multi-server Discord bot that detects rapid destructive moderation actions, removes all roles it can manage from the actor, creates a unique alarm, preserves recovery evidence, and notifies trusted operators. It never kicks or bans anyone.
 
@@ -26,7 +26,7 @@ PostgreSQL is authoritative for:
 - Full server backup snapshots
 - Restoration jobs and results
 
-The bot automatically applies numbered SQL migrations from `migrations/` when it starts. JSON, Excel, and alarm-log files are temporary Discord exports generated from PostgreSQL data and deleted after they are sent. A Railway persistent volume is not required for the bot's critical state.
+The bot automatically applies numbered SQL migrations from `migrations/` when it starts. Excel backup files and text alarm logs are temporary Discord exports generated from PostgreSQL data and deleted after they are sent. A Railway persistent volume is not required for the bot's critical state.
 
 ## Project files
 
@@ -36,7 +36,7 @@ The bot automatically applies numbered SQL migrations from `migrations/` when it
 - `database_check.py` — verifies the connection, applies migrations, and lists tables
 - `protection.py` — audit-log detection, counters, containment, alarms, and health checks
 - `commands.py` — `/antidefacement` commands and backup scheduler
-- `backup_service.py` — PostgreSQL snapshots and temporary JSON/Excel exports
+- `backup_service.py` — PostgreSQL snapshots and temporary Excel exports
 - `restore_service.py` — retained as dormant code for possible future recovery tooling; not loaded by the bot
 - `serializers.py` — Discord object snapshots
 - `notifier.py` — DM and alert-channel delivery
@@ -167,7 +167,7 @@ python main.py
 6. Run `/antidefacement activate`.
 7. Run `/antidefacement test` and confirm the expected DMs and channel alert arrive.
 
-Discord server Administrator permission by itself does not authorize bot commands. Runtime authorization uses only the global bot owner, configured protection owner, and configured Anti-Defacement administrators. The actual Discord server owner is specifically allowed to set the protection owner and manage the administrator list.
+Discord server Administrator permission by itself does not authorize bot commands. Runtime authorization uses only the global bot owner, configured protection owner, and configured Anti Defacement administrators. The actual Discord server owner is specifically allowed to set the protection owner and manage the administrator list.
 
 ## Commands
 
@@ -202,7 +202,7 @@ Discord server Administrator permission by itself does not authorize bot command
 - The bot records bans but does not automatically unban accounts.
 - Managed integration roles and roles above the bot cannot normally be removed or recreated.
 - The actual server owner cannot be modified by a bot.
-- PostgreSQL is the authoritative backup and recovery-log source; JSON and Excel are administrator-facing exports.
+- PostgreSQL is the authoritative structured backup and recovery-log source; Discord receives human-readable Excel and text exports only.
 
 ## Security behavior
 

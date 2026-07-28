@@ -258,7 +258,7 @@ class ProtectionCog(commands.Cog):
                 try:
                     await member.remove_roles(
                         *removable,
-                        reason=f"Anti-Defacement containment alarm {alarm_id}",
+                        reason=f"Anti Defacement containment alarm {alarm_id}",
                         atomic=False,
                     )
                     alarm["removed_roles"] = [serialize_role(role) for role in removable]
@@ -268,7 +268,7 @@ class ProtectionCog(commands.Cog):
                         try:
                             await member.remove_roles(
                                 role,
-                                reason=f"Anti-Defacement containment alarm {alarm_id}",
+                                reason=f"Anti Defacement containment alarm {alarm_id}",
                             )
                             alarm["removed_roles"].append(serialize_role(role))
                         except (discord.Forbidden, discord.HTTPException) as exc:
@@ -358,23 +358,17 @@ class ProtectionCog(commands.Cog):
             f"`{alarm['offender_username']}`. This is alarm ID **{alarm['alarm_id']}**.\n\n"
             "If this is a false alarm, please run the command "
             f"`/antidefacement falsealarm alarm_id:{alarm['alarm_id']}`.\n\n"
-            "Please see the attached recovery log for all users, channels, or roles that were "
-            "banned, kicked, or deleted. The bot did not kick or ban anyone."
+            "Please see the attached recovery log for any users, channels, or roles affected "
+            "by the incident."
         )
 
     async def _write_alarm_logs(self, alarm: dict[str, Any]) -> list[str]:
         guild_dir = ALARM_DIR / str(alarm["guild_id"])
         guild_dir.mkdir(parents=True, exist_ok=True)
-        json_path = guild_dir / f"{alarm['alarm_id']}.json"
         text_path = guild_dir / f"{alarm['alarm_id']}-recovery-log.txt"
 
-        await asyncio.to_thread(
-            json_path.write_text,
-            json.dumps(alarm, indent=2, ensure_ascii=False),
-            "utf-8",
-        )
         lines = [
-            "ANTI-DEFACEMENT RECOVERY LOG",
+            "ANTI DEFACEMENT RECOVERY LOG",
             f"Alarm ID: {alarm['alarm_id']}",
             f"Server: {alarm['guild_name']} ({alarm['guild_id']})",
             f"Offender: {alarm['offender_username']} ({alarm['offender_id']})",
@@ -409,7 +403,7 @@ class ProtectionCog(commands.Cog):
             lines.extend(["", "CONTAINMENT ERRORS"])
             lines.extend(f"- {value}" for value in alarm["removal_errors"])
         await asyncio.to_thread(text_path.write_text, "\n".join(lines), "utf-8")
-        return [str(text_path), str(json_path)]
+        return [str(text_path)]
 
     @tasks.loop(seconds=HEALTH_CHECK_INTERVAL_SECONDS)
     async def health_checks(self) -> None:
@@ -434,7 +428,7 @@ class ProtectionCog(commands.Cog):
             if not problems:
                 continue
             content = (
-                f"Anti-Defacement health warning for **{guild.name}** (`{guild.id}`):\n"
+                f"Anti Defacement health warning for **{guild.name}** (`{guild.id}`):\n"
                 + "\n".join(f"- {problem}" for problem in problems)
             )
             await self.notifier.broadcast(guild, content=content)

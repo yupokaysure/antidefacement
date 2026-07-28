@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -101,15 +100,9 @@ class BackupService:
         snapshot = await self.load_snapshot(backup)
         guild_dir = BACKUP_DIR / str(backup["guild_id"])
         guild_dir.mkdir(parents=True, exist_ok=True)
-        json_path = guild_dir / f"{backup['backup_id']}.json"
         xlsx_path = guild_dir / f"{backup['backup_id']}.xlsx"
-        await asyncio.to_thread(
-            json_path.write_text,
-            json.dumps(snapshot, indent=2, ensure_ascii=False),
-            "utf-8",
-        )
         await asyncio.to_thread(self._write_workbook, snapshot, xlsx_path)
-        return [str(json_path), str(xlsx_path)]
+        return [str(xlsx_path)]
 
     @staticmethod
     async def cleanup_export_files(paths: list[str]) -> None:
@@ -135,8 +128,8 @@ class BackupService:
             paths = await self.export_backup_files(backup)
             message = await channel.send(
                 content=(
-                    f"Anti-Defacement backup **{backup['backup_id']}** for **{guild.name}**. "
-                    "PostgreSQL is the authoritative recovery record; the JSON and spreadsheet are exports."
+                    f"Anti Defacement backup **{backup['backup_id']}** for **{guild.name}**. "
+                    "PostgreSQL is the authoritative recovery record; the attached spreadsheet is a readable export."
                 ),
                 files=[discord.File(value, filename=Path(value).name) for value in paths],
             )

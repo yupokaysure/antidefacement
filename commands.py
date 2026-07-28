@@ -83,7 +83,7 @@ class DeactivateConfirmView(discord.ui.View):
             details={"reason": self.reason},
         )
         content = (
-            f"Anti-Defacement protection was **deactivated** in **{guild.name}** "
+            f"Anti Defacement protection was **deactivated** in **{guild.name}** "
             f"by <@{interaction.user.id}> (`{interaction.user.id}`).\n"
             f"Reason: {self.reason}"
         )
@@ -106,7 +106,7 @@ class DeactivateConfirmView(discord.ui.View):
 
 @app_commands.guild_only()
 class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
-    """All Anti-Defacement slash commands."""
+    """All Anti Defacement slash commands."""
 
     def __init__(
         self,
@@ -134,7 +134,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
         if await can_use_commands(self.store, guild, interaction.user.id):
             return True
         message = (
-            "You are not authorized to use Anti-Defacement commands. Discord server "
+            "You are not authorized to use Anti Defacement commands. Discord server "
             "Administrator permission alone does not grant access."
         )
         if interaction.response.is_done():
@@ -163,7 +163,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
         )
         return False
 
-    @app_commands.command(name="setowner", description="Set this server's Anti-Defacement owner.")
+    @app_commands.command(name="setowner", description="Set this server's Anti Defacement owner.")
     async def setowner(self, interaction: discord.Interaction, member: discord.Member) -> None:
         if not await self._owner_or_global(interaction):
             return
@@ -178,17 +178,17 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             details={"new_owner_id": member.id},
         )
         await interaction.response.send_message(
-            f"{member.mention} is now the Anti-Defacement owner for this server.", ephemeral=True
+            f"{member.mention} is now the Anti Defacement owner for this server.", ephemeral=True
         )
         await self.notifier.broadcast(
             guild,
             content=(
-                f"The Anti-Defacement owner for **{guild.name}** was set to "
+                f"The Anti Defacement owner for **{guild.name}** was set to "
                 f"{member.mention} (`{member.id}`) by <@{interaction.user.id}>."
             ),
         )
 
-    @app_commands.command(name="setadmin", description="Add an exempt Anti-Defacement administrator.")
+    @app_commands.command(name="setadmin", description="Add an exempt Anti Defacement administrator.")
     async def setadmin(self, interaction: discord.Interaction, member: discord.Member) -> None:
         if not await self._can_manage_admins(interaction):
             return
@@ -206,10 +206,10 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
         )
         await interaction.response.send_message(
             (
-                f"{member.mention} was added as an Anti-Defacement administrator and is exempt "
+                f"{member.mention} was added as an Anti Defacement administrator and is exempt "
                 "from automatic role removal."
                 if added
-                else f"{member.mention} is already an Anti-Defacement administrator."
+                else f"{member.mention} is already an Anti Defacement administrator."
             ),
             ephemeral=True,
         )
@@ -217,12 +217,12 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             await self.notifier.broadcast(
                 guild,
                 content=(
-                    f"{member.mention} (`{member.id}`) was added as an exempt Anti-Defacement "
+                    f"{member.mention} (`{member.id}`) was added as an exempt Anti Defacement "
                     f"administrator in **{guild.name}** by <@{interaction.user.id}>."
                 ),
             )
 
-    @app_commands.command(name="removeadmin", description="Remove an Anti-Defacement administrator.")
+    @app_commands.command(name="removeadmin", description="Remove an Anti Defacement administrator.")
     async def removeadmin(self, interaction: discord.Interaction, member: discord.Member) -> None:
         if not await self._can_manage_admins(interaction):
             return
@@ -244,12 +244,12 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             await self.notifier.broadcast(
                 guild,
                 content=(
-                    f"{member.mention} (`{member.id}`) was removed as an Anti-Defacement "
+                    f"{member.mention} (`{member.id}`) was removed as an Anti Defacement "
                     f"administrator in **{guild.name}** by <@{interaction.user.id}>."
                 ),
             )
 
-    @app_commands.command(name="listadmins", description="List configured Anti-Defacement administrators.")
+    @app_commands.command(name="listadmins", description="List configured Anti Defacement administrators.")
     async def listadmins(self, interaction: discord.Interaction) -> None:
         if not await self._authorized(interaction):
             return
@@ -263,7 +263,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             ephemeral=True,
         )
 
-    @app_commands.command(name="owner", description="Show the configured Anti-Defacement owner.")
+    @app_commands.command(name="owner", description="Show the configured Anti Defacement owner.")
     async def owner(self, interaction: discord.Interaction) -> None:
         if not await self._authorized(interaction):
             return
@@ -276,7 +276,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             ephemeral=True,
         )
 
-    @app_commands.command(name="activate", description="Activate persistent Anti-Defacement protection.")
+    @app_commands.command(name="activate", description="Activate persistent Anti Defacement protection.")
     async def activate(self, interaction: discord.Interaction) -> None:
         if not await self._authorized(interaction):
             return
@@ -296,11 +296,11 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             self.store, guild_id=guild.id, actor_id=interaction.user.id, action="activate"
         )
         await interaction.response.send_message(
-            "Anti-Defacement protection is active and will remain active after restarts.", ephemeral=True
+            "Anti Defacement protection is active and will remain active after restarts.", ephemeral=True
         )
         await self.notifier.broadcast(
             guild,
-            content=f"Anti-Defacement protection was **activated** in **{guild.name}** by <@{interaction.user.id}>.",
+            content=f"Anti Defacement protection was **activated** in **{guild.name}** by <@{interaction.user.id}>.",
         )
 
     @app_commands.command(name="deactivate", description="Request persistent deactivation.")
@@ -550,7 +550,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             content=f"Scheduled backups were cancelled in **{guild.name}** by <@{interaction.user.id}>.",
         )
 
-    @app_commands.command(name="alarms", description="List recent Anti-Defacement alarms.")
+    @app_commands.command(name="alarms", description="List recent Anti Defacement alarms.")
     async def alarms(
         self,
         interaction: discord.Interaction,
@@ -640,7 +640,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
         dm_results, channel_result = await self.notifier.broadcast(
             guild,
             content=(
-                f"**TEST ALERT:** Anti-Defacement notifications are working in **{guild.name}**. "
+                f"**TEST ALERT:** Anti Defacement notifications are working in **{guild.name}**. "
                 f"Triggered by <@{interaction.user.id}>. No roles were changed."
             ),
         )
@@ -685,7 +685,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
         latest = await self.store.latest_backup(guild.id)
         schedule = settings.get("backup_schedule")
         await interaction.response.send_message(
-            f"**Anti-Defacement status**\n"
+            f"**Anti Defacement status**\n"
             f"Protection: **{'ACTIVE' if settings.get('active') else 'INACTIVE'}**\n"
             f"Protection owner: {self._mention(settings.get('protection_owner_id'))}\n"
             f"Configured admins: **{len(settings.get('admins', []))}**\n"
@@ -763,7 +763,7 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
                 log.exception("Scheduled backup failed for guild %s", guild.id)
                 await self.notifier.broadcast(
                     guild,
-                    content=f"Scheduled Anti-Defacement backup failed in **{guild.name}**: `{exc}`",
+                    content=f"Scheduled Anti Defacement backup failed in **{guild.name}**: `{exc}`",
                 )
 
     @backup_scheduler.before_loop

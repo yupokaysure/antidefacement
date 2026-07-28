@@ -127,7 +127,7 @@ class RestoreService:
                     colour=discord.Colour(int(data.get("color", 0))),
                     hoist=bool(data.get("hoist", False)),
                     mentionable=bool(data.get("mentionable", False)),
-                    reason=f"Anti-Defacement restore {result['restore_id']}",
+                    reason=f"Anti Defacement restore {result['restore_id']}",
                 )
                 result["role_id_map"][str(old_id)] = new_role.id
                 result["created_roles"].append({"old_id": old_id, "new_id": new_role.id, "name": new_role.name})
@@ -143,7 +143,7 @@ class RestoreService:
                 }
                 await guild.edit_role_positions(
                     positions=safe_positions,
-                    reason=f"Anti-Defacement restore {result['restore_id']}",
+                    reason=f"Anti Defacement restore {result['restore_id']}",
                 )
             except (discord.Forbidden, discord.HTTPException, TypeError) as exc:
                 result["errors"].append(f"Could not fully restore role ordering: {exc}")
@@ -188,7 +188,7 @@ class RestoreService:
                     data.get("name") or "restored-category",
                     position=int(data.get("position", 0)),
                     overwrites=self._build_overwrites(guild, data, role_map),
-                    reason=f"Anti-Defacement restore {result['restore_id']}",
+                    reason=f"Anti Defacement restore {result['restore_id']}",
                 )
                 result["channel_id_map"][str(old_id)] = channel.id
                 result["created_channels"].append({"old_id": old_id, "new_id": channel.id, "name": channel.name})
@@ -214,7 +214,7 @@ class RestoreService:
                 "category": category,
                 "position": int(data.get("position", 0)),
                 "overwrites": overwrites,
-                "reason": f"Anti-Defacement restore {result['restore_id']}",
+                "reason": f"Anti Defacement restore {result['restore_id']}",
             }
             try:
                 kind = data.get("kind")
@@ -285,7 +285,7 @@ class RestoreService:
             try:
                 await member.add_roles(
                     *roles,
-                    reason=f"Anti-Defacement restore {result['restore_id']}",
+                    reason=f"Anti Defacement restore {result['restore_id']}",
                     atomic=False,
                 )
                 result["member_roles_restored"] += len(roles)
