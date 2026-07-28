@@ -454,8 +454,6 @@ class ProtectionCog(commands.Cog):
             problems.append("Missing View Audit Log; destructive actions cannot be attributed.")
         if not perms.manage_roles:
             problems.append("Missing Manage Roles; offenders cannot be contained.")
-        if not perms.manage_channels:
-            problems.append("Missing Manage Channels; deleted channels cannot be restored.")
         everyone = guild.default_role.permissions
         dangerous = []
         for attr, label in (

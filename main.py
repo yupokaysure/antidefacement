@@ -14,7 +14,6 @@ from commands import AntiDefacementCommands
 from config import DATABASE_URL, DEV_GUILD_ID, DISCORD_TOKEN, GLOBAL_BOT_OWNER_ID
 from notifier import Notifier
 from protection import ProtectionCog
-from restore_service import RestoreService
 from storage import PostgresStore
 
 
@@ -35,7 +34,6 @@ class AntiDefacementBot(commands.Bot):
         self.store = PostgresStore(DATABASE_URL)
         self.notifier = Notifier(self, self.store)
         self.backup_service = BackupService(self, self.store)
-        self.restore_service = RestoreService(self.store, self.backup_service)
 
     async def setup_hook(self) -> None:
         await self.store.connect()
@@ -47,7 +45,6 @@ class AntiDefacementBot(commands.Bot):
                 self,
                 self.store,
                 self.backup_service,
-                self.restore_service,
                 self.notifier,
             )
         )

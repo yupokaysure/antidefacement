@@ -136,7 +136,7 @@ class BackupService:
             message = await channel.send(
                 content=(
                     f"Anti-Defacement backup **{backup['backup_id']}** for **{guild.name}**. "
-                    "PostgreSQL is the restoration source; the JSON and spreadsheet are exports."
+                    "PostgreSQL is the authoritative recovery record; the JSON and spreadsheet are exports."
                 ),
                 files=[discord.File(value, filename=Path(value).name) for value in paths],
             )

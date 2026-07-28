@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import secrets
 from datetime import datetime, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -26,7 +25,6 @@ from permissions import (
     record_config_event,
 )
 from protection import ProtectionCog
-from restore_service import RestoreService
 from storage import PostgresStore, utc_iso
 
 log = logging.getLogger(__name__)
@@ -115,14 +113,12 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
         bot: commands.Bot,
         store: PostgresStore,
         backup_service: BackupService,
-        restore_service: RestoreService,
         notifier: Notifier,
     ) -> None:
         super().__init__()
         self.bot = bot
         self.store = store
         self.backup_service = backup_service
-        self.restore_service = restore_service
         self.notifier = notifier
         self.backup_scheduler.start()
 
@@ -554,145 +550,6 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
             content=f"Scheduled backups were cancelled in **{guild.name}** by <@{interaction.user.id}>.",
         )
 
-    @app_commands.command(name="restore", description="Preview or execute restoration from a backup.")
-    async def restore(
-        self,
-        interaction: discord.Interaction,
-        mode: Literal["preview", "execute"] = "preview",
-        backup_id: str | None = None,
-    ) -> None:
-        if not await self._authorized(interaction):
-            return
-        guild = interaction.guild
-        assert guild is not None
-        await interaction.response.defer(ephemeral=True, thinking=True)
-        backup = (
-            await self.store.get_backup(backup_id.strip().upper())
-            if backup_id
-            else await self.store.latest_backup(guild.id)
-        )
-        if not backup or int(backup.get("guild_id", 0)) != guild.id or backup.get("status") != "complete":
-            await interaction.followup.send("No usable backup was found.", ephemeral=True)
-            return
-        if mode == "preview":
-            result = await self.restore_service.preview(guild, backup)
-            await interaction.followup.send(
-                f"**Restore preview for {backup['backup_id']}**\n"
-                f"Roles to recreate: **{result['missing_role_count']}**\n"
-                f"Channels to recreate: **{result['missing_channel_count']}**\n"
-                f"Member-role assignments to attempt: **{result['member_role_assignments']}**\n"
-                f"Backup members no longer present: **{result['members_not_in_server']}**\n\n"
-                "Run the same command with `mode:execute` to perform the restoration.",
-                ephemeral=True,
-            )
-            return
-        result = await self.restore_service.execute(
-            guild, backup, started_by=interaction.user.id
-        )
-        await interaction.followup.send(self._restore_result_text(result), ephemeral=True)
-        await self.notifier.broadcast(
-            guild,
-            content=(
-                f"Restore job **{result['restore_id']}** from backup **{backup['backup_id']}** "
-                f"was started by <@{interaction.user.id}> and finished with status `{result['status']}`."
-            ),
-        )
-
-    @app_commands.command(name="restorealarm", description="Restore channels and roles deleted in an alarm.")
-    async def restorealarm(
-        self,
-        interaction: discord.Interaction,
-        alarm_id: str,
-        mode: Literal["preview", "execute"] = "preview",
-    ) -> None:
-        if not await self._authorized(interaction):
-            return
-        guild = interaction.guild
-        assert guild is not None
-        alarm_id = alarm_id.strip().upper()
-        alarm = await self.store.get_alarm(alarm_id)
-        if not alarm or int(alarm.get("guild_id", 0)) != guild.id:
-            await interaction.response.send_message("Alarm not found for this server.", ephemeral=True)
-            return
-        await interaction.response.defer(ephemeral=True, thinking=True)
-
-        roles = []
-        channels = []
-        member_roles: dict[int, list[int]] = {}
-        for event in alarm.get("evidence", []):
-            target = event.get("target") or {}
-            if event.get("action_type") == "role_delete" and target.get("id"):
-                roles.append(target)
-                for member_id in target.get("member_ids", []):
-                    member_roles.setdefault(int(member_id), []).append(int(target["id"]))
-            elif event.get("action_type") == "channel_delete" and target.get("id"):
-                channels.append(target)
-
-        snapshot = {
-            "schema_version": 1,
-            "guild": {
-                "id": guild.id,
-                "name": guild.name,
-                "owner_id": guild.owner_id,
-                "backed_up_at": alarm.get("triggered_at"),
-            },
-            "roles": roles,
-            "channels": channels,
-            "members": [
-                {"id": member_id, "role_ids": role_ids, "role_names": []}
-                for member_id, role_ids in member_roles.items()
-            ],
-        }
-        backup_id = f"AR-{secrets.randbelow(10**12):012d}"
-        backup = {
-            "backup_id": backup_id,
-            "guild_id": guild.id,
-            "guild_name": guild.name,
-            "created_at": utc_iso(),
-            "created_by": interaction.user.id,
-            "backup_type": "alarm_recovery",
-            "source_alarm_id": alarm_id,
-            "status": "complete",
-            "snapshot": snapshot,
-            "delivery_status": "not_applicable",
-        }
-        await self.store.add_backup(backup)
-        if mode == "preview":
-            preview = await self.restore_service.preview(guild, backup)
-            await interaction.followup.send(
-                f"**Alarm restore preview for {alarm_id}**\n"
-                f"Roles to recreate: **{preview['missing_role_count']}**\n"
-                f"Channels to recreate: **{preview['missing_channel_count']}**\n"
-                f"Member-role assignments to attempt: **{preview['member_role_assignments']}**\n\n"
-                f"Run `/antidefacement restorealarm alarm_id:{alarm_id} mode:execute` to continue.",
-                ephemeral=True,
-            )
-            return
-        result = await self.restore_service.execute(
-            guild, backup, started_by=interaction.user.id
-        )
-        history = list(alarm.get("resolution_history", []))
-        history.append(
-            {
-                "action": "restore_alarm",
-                "by": interaction.user.id,
-                "at": utc_iso(),
-                "restore_id": result["restore_id"],
-                "result": result["status"],
-            }
-        )
-        await self.store.update_alarm(alarm_id, resolution_history=history)
-        text = self._restore_result_text(result)
-        affected_departures = sum(
-            1 for event in alarm.get("evidence", []) if event.get("action_type") in {"kick", "ban"}
-        )
-        if affected_departures:
-            text += (
-                f"\n\nThis alarm also contains **{affected_departures}** kick/ban event(s). "
-                "The bot does not automatically rejoin users or unban accounts; use the recovery log."
-            )
-        await interaction.followup.send(text, ephemeral=True)
-
     @app_commands.command(name="alarms", description="List recent Anti-Defacement alarms.")
     async def alarms(
         self,
@@ -930,25 +787,3 @@ class AntiDefacementCommands(commands.GroupCog, group_name="antidefacement"):
     @staticmethod
     def _channel_mention(channel_id: int | None) -> str:
         return f"<#{channel_id}> (`{channel_id}`)" if channel_id else "Not set"
-
-    @staticmethod
-    def _restore_result_text(result: dict) -> str:
-        text = (
-            f"**Restore {result['restore_id']}** finished with status `{result['status']}`.\n"
-            f"Roles recreated: **{len(result.get('created_roles', []))}**\n"
-            f"Channels recreated: **{len(result.get('created_channels', []))}**\n"
-            f"Member-role assignments restored: **{result.get('member_roles_restored', 0)}**"
-        )
-        errors = result.get("errors", [])
-        if errors:
-            text += "\n\n**Errors**\n" + "\n".join(f"• {item}" for item in errors[:20])
-            if len(errors) > 20:
-                text += f"\n• …and {len(errors) - 20} more"
-        persistence_error = result.get("database_persistence_error")
-        if persistence_error:
-            text += (
-                "\n\n**Database warning**\n"
-                "The Discord restoration completed, but saving the final restore-job record failed: "
-                f"`{persistence_error}`"
-            )
-        return text

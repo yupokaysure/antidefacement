@@ -37,7 +37,7 @@ The bot automatically applies numbered SQL migrations from `migrations/` when it
 - `protection.py` — audit-log detection, counters, containment, alarms, and health checks
 - `commands.py` — `/antidefacement` commands and backup scheduler
 - `backup_service.py` — PostgreSQL snapshots and temporary JSON/Excel exports
-- `restore_service.py` — preview and execute restoration
+- `restore_service.py` — retained as dormant code for possible future recovery tooling; not loaded by the bot
 - `serializers.py` — Discord object snapshots
 - `notifier.py` — DM and alert-channel delivery
 - `permissions.py` — database-backed command authorization
@@ -56,7 +56,7 @@ The bot automatically applies numbered SQL migrations from `migrations/` when it
    - Send Messages
    - Attach Files
    - Read Message History
-6. Put the bot role above every moderator or administrator role that it may need to remove or restore.
+6. Put the bot role above every moderator or administrator role whose roles it may need to remove.
 
 The bot intentionally does not need Kick Members or Ban Members. It observes those actions through the audit log but never performs them.
 
@@ -192,8 +192,6 @@ Discord server Administrator permission by itself does not authorize bot command
 - `/antidefacement schedulebackup`
 - `/antidefacement cancelschedule`
 - `/antidefacement backuphistory`
-- `/antidefacement restore`
-- `/antidefacement restorealarm`
 
 ## Restoration limits
 
@@ -204,7 +202,7 @@ Discord server Administrator permission by itself does not authorize bot command
 - The bot records bans but does not automatically unban accounts.
 - Managed integration roles and roles above the bot cannot normally be removed or recreated.
 - The actual server owner cannot be modified by a bot.
-- PostgreSQL is the restoration source; JSON and Excel are administrator-facing exports.
+- PostgreSQL is the authoritative backup and recovery-log source; JSON and Excel are administrator-facing exports.
 
 ## Security behavior
 
